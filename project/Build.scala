@@ -17,10 +17,7 @@ object BuildSettings {
     Seq(
       scalaVersion := "2.10.2",
       libraryDependencies := Seq("org.scalatest" % "scalatest_2.10" % "1.9.2")
-    ) ++
-      unitTestSettings ++
-      integrationTestSettings ++
-      functionalTestSettings
+    ) ++ unitTestSettings ++ integrationTestSettings ++ functionalTestSettings
   }
 
   lazy val unitTestSettings = createTestSettings("unit", Test)
@@ -35,15 +32,16 @@ object BuildSettings {
     println("creating settings for " + testType + " : " + testConfiguration)
     inConfig(testConfiguration)(Defaults.testSettings) ++
     (sourceDirectory in testConfiguration <<= baseDirectory(_ / "src" / "test")) ++
-    (sources in IntegrationTests := ( ((file("src") / "test") ** "*.scala").get).filter(shouldInclude(_, testType))  ) ++
-    (classDirectory in testConfiguration <<= crossTarget(_ / "test-classes"))      
+    (sources in testConfiguration := ( ((file("src") / "test") ** "*.scala").get).filter(shouldInclude(_, testType))  ) ++
+    (classDirectory in testConfiguration <<= crossTarget(_ / "test-classes"))    
+      
     // (testOptions in testConfiguration := Seq(Tests.Filter(name => name contains "."+testType+".")))
     // (testOptions in testConfiguration += Tests.Argument("-oDF"))
   }
     
   def shouldInclude(testFile: File, testType: String) = {
     val path = testFile.toURI.toString
-    val result = path.contains("/" + testType + "/") || path.contains("/shared/") || path.contains("ScalatePackage")
+    val result = path.contains("/" + testType + "/") || path.contains("/shared/")
     printf("%s: should include %s => %s %n", testType, path, result)
     result
   }  
