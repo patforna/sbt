@@ -16,11 +16,12 @@ object BuildSettings {
   lazy val buildSettings = {
     Seq(
       scalaVersion := "2.10.2",
-      libraryDependencies := Seq("org.scalatest" % "scalatest_2.10" % "1.9.2")
+      libraryDependencies := Seq("org.scalatest" % "scalatest_2.10" % "1.9.2" % "compile, test")      
     ) ++ unitTestSettings ++ integrationTestSettings ++ functionalTestSettings
   }
 
-  lazy val unitTestSettings = createTestSettings("unit", Test)
+  lazy val UnitTests = config("unit") extend(Test)
+  lazy val unitTestSettings = createTestSettings("unit", UnitTests)
 
   lazy val IntegrationTests = config("integration") extend(Test)
   lazy val integrationTestSettings = createTestSettings("integration", IntegrationTests)
@@ -29,17 +30,14 @@ object BuildSettings {
   lazy val functionalTestSettings = createTestSettings("functional", FunctionalTests)
 
   private def createTestSettings(testType: String, testConfiguration: Configuration) = {
-    println("creating settings for " + testType + " : " + testConfiguration)
     inConfig(testConfiguration)(Defaults.testSettings) ++
-    (sourceDirectory in testConfiguration <<= baseDirectory(_ / "src" / "test")) ++
-    (sources in testConfiguration := ( ((file("src") / "test") ** "*.scala").get).filter(shouldInclude(_, testType))  ) ++
-    (classDirectory in testConfiguration <<= crossTarget(_ / "test-classes"))    
-      
-    // (testOptions in testConfiguration := Seq(Tests.Filter(name => name contains "."+testType+".")))
-    // (testOptions in testConfiguration += Tests.Argument("-oDF"))
+    (sourceDirectory in testConfiguration <<= sourceDirectory in Test) ++
+    (classDirectory in testConfiguration <<= classDirectory in Test) ++    
+    (sources in testConfiguration ~= { _ filter { shouldInclude(_, testType) } } ) ++
+    (testOptions in testConfiguration += Tests.Argument("-oDF"))
   }
     
-  def shouldInclude(testFile: File, testType: String) = {
+  private def shouldInclude(testFile: File, testType: String) = {
     val path = testFile.toURI.toString
     val result = path.contains("/" + testType + "/") || path.contains("/shared/")
     printf("%s: should include %s => %s %n", testType, path, result)
@@ -53,8 +51,6 @@ object CasperBuild extends Build {
 
   lazy val core = Project("core", file("."))  
     .configs(Test)
-    .configs(IntegrationTests)
-    .configs(FunctionalTests)
     .settings(buildSettings : _*)
 }
 
