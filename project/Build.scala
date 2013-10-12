@@ -1,13 +1,8 @@
-import _root_.sbt.IO
-import java.lang.management.ManagementFactory
-import java.lang.System._
-import java.net.URL
 import sbt._
 import sbt.Configuration
 import sbt.Keys._
 import scala._
 import scala.Predef._
-import scala.collection.JavaConversions._
 
 object BuildSettings {
   import Project._
@@ -16,17 +11,17 @@ object BuildSettings {
   lazy val buildSettings = {
     Seq(
       scalaVersion := "2.10.2",
-      libraryDependencies := Seq("org.scalatest" % "scalatest_2.10" % "1.9.2" % "compile, test")      
+      libraryDependencies := Seq("org.scalatest" % "scalatest_2.10" % "1.9.2" % "unit, integration, functional")      
     ) ++ unitTestSettings ++ integrationTestSettings ++ functionalTestSettings
   }
 
-  lazy val UnitTests = config("unit") extend(Test)
+  lazy val UnitTests = config("unit") extend(Runtime)
   lazy val unitTestSettings = createTestSettings("unit", UnitTests)
 
-  lazy val IntegrationTests = config("integration") extend(Test)
+  lazy val IntegrationTests = config("integration") extend(Runtime)
   lazy val integrationTestSettings = createTestSettings("integration", IntegrationTests)
 
-  lazy val FunctionalTests = config("functional") extend(Test)
+  lazy val FunctionalTests = config("functional") extend(Runtime)
   lazy val functionalTestSettings = createTestSettings("functional", FunctionalTests)
 
   private def createTestSettings(testType: String, testConfiguration: Configuration) = {
@@ -39,9 +34,7 @@ object BuildSettings {
     
   private def shouldInclude(testFile: File, testType: String) = {
     val path = testFile.toURI.toString
-    val result = path.contains("/" + testType + "/") || path.contains("/shared/")
-    printf("%s: should include %s => %s %n", testType, path, result)
-    result
+    path.contains("/" + testType + "/") || path.contains("/shared/")
   }  
 }
 
@@ -50,7 +43,9 @@ object CasperBuild extends Build {
   import BuildSettings._
 
   lazy val core = Project("core", file("."))  
-    .configs(Test)
+    .configs(UnitTests)
+    .configs(IntegrationTests)
+    .configs(FunctionalTests)        
     .settings(buildSettings : _*)
 }
 
