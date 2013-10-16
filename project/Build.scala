@@ -11,17 +11,20 @@ object BuildSettings {
   lazy val buildSettings = {
     Seq(
       scalaVersion := "2.10.2",
-      libraryDependencies := Seq("org.scalatest" % "scalatest_2.10" % "1.9.2" % "unit, integration, functional")      
-    ) ++ unitTestSettings ++ integrationTestSettings ++ functionalTestSettings
+      libraryDependencies := Seq("org.scalatest" % "scalatest_2.10" % "1.9.2" % "unit, integration, functional, shared")      
+    ) ++ sharedSettings ++ unitTestSettings ++ integrationTestSettings ++ functionalTestSettings
   }
 
-  lazy val UnitTests = config("unit") extend(Runtime)
+  lazy val Shared = config("shared") extend(Runtime)
+  lazy val sharedSettings = createTestSettings("shared", Shared)
+
+  lazy val UnitTests = config("unit") extend(Shared)
   lazy val unitTestSettings = createTestSettings("unit", UnitTests)
 
-  lazy val IntegrationTests = config("integration") extend(Runtime)
+  lazy val IntegrationTests = config("integration") extend(Shared)
   lazy val integrationTestSettings = createTestSettings("integration", IntegrationTests)
 
-  lazy val FunctionalTests = config("functional") extend(Runtime)
+  lazy val FunctionalTests = config("functional") extend(Shared)
   lazy val functionalTestSettings = createTestSettings("functional", FunctionalTests)
 
   private def createTestSettings(testType: String, testConfiguration: Configuration) = {
@@ -34,7 +37,7 @@ object BuildSettings {
     
   private def shouldInclude(testFile: File, testType: String) = {
     val path = testFile.toURI.toString
-    path.contains("/" + testType + "/") || path.contains("/shared/")
+    path.contains("/" + testType + "/") //|| path.contains("/shared/")
   }  
 }
 
@@ -43,6 +46,7 @@ object CasperBuild extends Build {
   import BuildSettings._
 
   lazy val core = Project("core", file("."))  
+    .configs(Shared)  
     .configs(UnitTests)
     .configs(IntegrationTests)
     .configs(FunctionalTests)        
