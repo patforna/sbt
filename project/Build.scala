@@ -16,9 +16,9 @@ object BuildSettings {
   }
 
   lazy val Shared = config("shared") extend(Runtime)
-  lazy val sharedSettings = createTestSettings("shared", Shared)
+  lazy val sharedSettings = createTestSettings("shared", Shared, Defaults.configSettings)
 
-  lazy val UnitTests = config("unit") extend(Shared)
+  lazy val UnitTests = config("unit") extend(Runtime)
   lazy val unitTestSettings = createTestSettings("unit", UnitTests)
 
   lazy val IntegrationTests = config("integration") extend(Shared)
@@ -27,8 +27,8 @@ object BuildSettings {
   lazy val FunctionalTests = config("functional") extend(Shared)
   lazy val functionalTestSettings = createTestSettings("functional", FunctionalTests)
 
-  private def createTestSettings(testType: String, testConfiguration: Configuration) = {
-    inConfig(testConfiguration)(Defaults.testSettings) ++
+  private def createTestSettings(testType: String, testConfiguration: Configuration, settings: Seq[Setting[_]] = Defaults.testSettings) = {
+    inConfig(testConfiguration)(settings) ++
     (sourceDirectory in testConfiguration <<= sourceDirectory in Test) ++
     (classDirectory in testConfiguration <<= classDirectory in Test) ++    
     (sources in testConfiguration ~= { _ filter { shouldInclude(_, testType) } } ) ++
@@ -36,8 +36,7 @@ object BuildSettings {
   }
     
   private def shouldInclude(testFile: File, testType: String) = {
-    val path = testFile.toURI.toString
-    path.contains("/" + testType + "/") //|| path.contains("/shared/")
+    testFile.toURI.toString.contains("/" + testType + "/")
   }  
 }
 
