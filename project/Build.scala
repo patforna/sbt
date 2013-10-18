@@ -18,7 +18,7 @@ object BuildSettings {
   lazy val Shared = config("shared") extend(Runtime)
   lazy val sharedSettings = createTestSettings("shared", Shared, Defaults.configSettings)
 
-  lazy val UnitTests = config("unit") extend(Runtime)
+  lazy val UnitTests = config("unit") extend(Shared)
   lazy val unitTestSettings = createTestSettings("unit", UnitTests)
 
   lazy val IntegrationTests = config("integration") extend(Shared)
