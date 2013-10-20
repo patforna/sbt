@@ -12,8 +12,7 @@ object BuildSettings {
   import Project._
   import Defaults._
 
-  val buildVersion = Option(System.getenv("GO_PIPELINE_LABEL")).getOrElse("LOCAL")
-  val debugging: Boolean = ManagementFactory.getRuntimeMXBean().getInputArguments().exists(_ == "-Xdebug")
+  val debugging = false
 
   lazy val buildSettings = {
     Seq(
@@ -79,6 +78,8 @@ object BuildSettings {
 object CasperBuild extends Build {
 
   import BuildSettings._
+  
+  lazy val platform = ProjectRef(file("platform"), "platform")  
 
   lazy val core = Project("core", file("."))  
     .configs(Shared)
@@ -87,4 +88,7 @@ object CasperBuild extends Build {
     .configs(FunctionalTests)
     .configs(SystemTests)
     .settings(buildSettings : _*)
+    .aggregate(platform)
+    .dependsOn(platform % "compile;shared->shared")
+    
 }
