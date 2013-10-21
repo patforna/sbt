@@ -64,9 +64,9 @@ object BuildSettings {
   }
   
   def zipTestsTask = {
-    (fullClasspath in Runtime, Keys.packageBin in Compile, Keys.packageBin in Shared, Keys.packageBin in IntegrationTests, Keys.packageBin in FunctionalTests, Keys.packageBin in SystemTests, streams) map {
-      (classpath, coreJar, sharedJar, integrationJar, functionalJar, systemJar, streams) =>
-        val libs = (classpath.files +++ coreJar +++ sharedJar +++ integrationJar +++ functionalJar +++ systemJar).get x flatRebase("lib")
+    (fullClasspath in Runtime, fullClasspath in Shared, fullClasspath in IntegrationTests, fullClasspath in FunctionalTests, fullClasspath in SystemTests, Keys.packageBin in Compile, Keys.packageBin in Shared, Keys.packageBin in IntegrationTests, Keys.packageBin in FunctionalTests, Keys.packageBin in SystemTests, Keys.packageBin in (CasperBuild.platform, Compile), Keys.packageBin in (CasperBuild.platform, Shared), streams) map {
+      (runtimeDeps, sharedDeps, integrationDeps, functionalDeps, systemDeps, coreJar, sharedJar, integrationJar, functionalJar, systemJar, platformJar, platformSharedJar, streams) =>
+        val libs = (runtimeDeps.files +++ sharedDeps.files +++ integrationDeps.files +++ functionalDeps.files +++ systemDeps.files +++ coreJar +++ sharedJar +++ integrationJar +++ functionalJar +++ systemJar +++ platformJar +++ platformSharedJar).get x flatRebase("lib")
 
         val zipPath = coreJar.getAbsolutePath.replace(".jar", "-tests.zip")
         sbt.IO.zip(libs, file(zipPath))
@@ -82,11 +82,7 @@ object CasperBuild extends Build {
   lazy val platform = ProjectRef(file("platform"), "platform")  
 
   lazy val core = Project("core", file("."))  
-    .configs(Shared)
-    .configs(UnitTests)
-    .configs(IntegrationTests)
-    .configs(FunctionalTests)
-    .configs(SystemTests)
+    .configs(Shared, UnitTests, IntegrationTests, FunctionalTests, SystemTests)
     .settings(buildSettings : _*)
     .aggregate(platform)
     .dependsOn(platform % "compile;shared->shared")
