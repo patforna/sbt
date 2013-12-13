@@ -12,12 +12,13 @@ object BuildSettings {
   import Project._
   import Defaults._
 
-  val debugging = false
-
   lazy val buildSettings = {
     Seq(
       scalaVersion := "2.10.2",
-      libraryDependencies := Seq("org.scalatest" % "scalatest_2.10" % "1.9.2" % "unit, integration, functional, shared")      
+      libraryDependencies := Seq(
+        "org.scalatest" % "scalatest_2.10" % "2.0"% "test, shared, unit, integration, functional",
+        "org.scala-lang" % "scala-library" % "2.10.2" // why do we need this here?        
+      )
     ) ++ 
     testSettings ++
     zipSettings
@@ -29,15 +30,13 @@ object BuildSettings {
   lazy val FunctionalTests = config("functional") extend(Shared)
   lazy val SystemTests = config("system") extend(Shared)
 
-  lazy val testSettings = configure(Shared, Defaults.configSettings) ++ configure(UnitTests) ++ configure(IntegrationTests) ++ configure(FunctionalTests) ++ configure(SystemTests)
+  lazy val testSettings = configure(Shared, Defaults.configSettings) ++ configure(UnitTests) ++ configure(IntegrationTests) ++ configure(FunctionalTests) ++ configure(SystemTests) ++ (testOptions += Tests.Argument("-oDF"))
 
   private def configure(config: Configuration, settings: Seq[Setting[_]] = Defaults.testSettings) = {
     inConfig(config)(settings) ++
-    (fork in config := !debugging) ++    
     (sourceDirectory in config <<= sourceDirectory in Test) ++
     (classDirectory in config <<= classDirectory in Test) ++    
     (sources in config ~= { _ filter { shouldInclude(_, config.name) } } ) ++
-    (testOptions in config += Tests.Argument("-oDF")) ++
     (mappings in (config, Keys.packageBin) ~= { _.filter { case (file, path) => { file.getAbsolutePath.contains(config.name) || !file.getName.endsWith(".class") } } } )    
   }
     
